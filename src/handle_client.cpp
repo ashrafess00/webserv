@@ -50,21 +50,22 @@ int waitClients(int serverSocket) {
                 }
             }
 
-            // check data from clients
+            // check if any data is available to read on one the corresponding file descriptor.
             for (int i = 1; i < CLIENTS_COUNT; i++) {
                 if (fds[i].fd > 0 && (fds[i].revents & POLLIN)) {
                     char *buffer = new char[BUFFER_SIZE];
                     ssize_t bytes_received = recv(fds[i].fd, buffer, BUFFER_SIZE, 0);
                     
-                    if (bytes_received < 0 || bytes_received == 0) {
+                    if (bytes_received <= 0) {
+                        std::cout << "fd " << fds[i].fd << " removed\n";
                         close(fds[i].fd);
                         fds[i].fd = 0;
                         fds[i].events = 0;
                         fds[i].revents = 0;
                         activeClients--;
-                        std::cout << "fd " << fds[i].fd << " removed\n";
                     }
                     else {
+                        //send requested data to the client
                         std::string str_buffer(buffer), target, method;
                         int pos = str_buffer.find(" ");
                         // -----------------------------------------------------
@@ -74,7 +75,6 @@ int waitClients(int serverSocket) {
                         send(fds[i].fd, http_resp.c_str(), http_resp.length(), 0);
                         std::cout << "data received and sent\n";
                         close(fds[i].fd);
-                        // break;
                     }
                 }
             }
