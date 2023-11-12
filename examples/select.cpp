@@ -17,83 +17,38 @@
 #include <signal.h>
 #include <poll.h>
 #include <termios.h>
+#include "fcntl.h"
 
 int main() {
+    int listen_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    //Set up a non-blocking read from stdin(chatgpt)
-    struct termios orig_term, new_term;
-    int saved_flags;
+    int flags = fcntl(listen_socket_fd, F_GETFL);
 
-    tcgetattr(STDIN_FILENO, &orig_term);
-    new_term = orig_term;
-    new_term.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &new_term);
-    saved_flags = fcntl(STDIN_FILENO, F_GETFL);
-    fcntl(STDIN_FILENO, F_SETFL, saved_flags | O_NONBLOCK);
+    fcntl(listen_socket_fd, F_SETFL, flags | O_NONBLOCK);
 
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(8080);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    bind(listen_socket_fd, (struct sockaddr *) &addr, sizeof(addr));
+    listen(listen_socket_fd, 100);
 
-    struct pollfd fds[2];
-    fds[0].fd = STDIN_FILENO;
-    fds[0].events = POLLIN;
-
-    fds[1].fd = open("file1", O_RDONLY);
-    fds[1].events = POLLIN;
-
-    
-    //3 seconds
-    int timeout = 5000;
-
-    int retval = poll(fds, 2, timeout);
-    while (true)
-    {
-         if (retval == -1)
-            perror("poll");
-        else if (retval == 0)
-            std::cout << "timeout \n";
-        else {
-            if (fds[0].revents == POLLIN) {
-                printf("afin a tffa7 lmrta7 - 1\n");
-            }
-            if (fds[1].revents == POLLIN) {
-                printf("afin a tffa7 lmrta7 - 2\n");
-            }
+    for (;;) {
+        int client_socket_fd = accept(listen_socket_fd, NULL, NULL);
+        if (client_socket_fd == -1) {
+        if (errno == EWOULDBLOCK) {
+            printf("No pending connections; sleeping for one second.\n");
+            sleep(1);
+        } else {
+            perror("error when accepting connection");
+            exit(1);
         }
-    }
+        } else {
+        char msg[] = "hello\n";
+        printf("Got a connection; writing 'hello' then closing.\n");
+        send(client_socket_fd, msg, sizeof(msg), 0);
+        close(client_socket_fd);
+        }
+  }
     
-
-
-
-//      struct pollfd struct_fds[2];
-
-//     int fd;
-
-//     fd = open(0, O_RDONLY);
-//     struct_fds[0].fd = fd;
-//     fd = open(0, O_RDONLY);
-//     struct_fds[1].fd = fd;
-
-//     struct_fds[0].events = POLLIN;
-//     struct_fds[1].events = POLLIN;
-
-//     poll(struct_fds, 2, 0);
-
-    
-// if ( struct_fds[0].revents ==  POLLOUT)
-//      printf("The file1 can accept write operations.\n");
-// else
-//     {
-//      printf("The file1 cannot accept write operations.\n" );
-//      printf("file1 revents = %i\n", struct_fds[0].revents );
-//      }
-// if ( struct_fds[1].revents == POLLOUT)
-//      printf("The file2 can accept write operations.\n" );
-// else
-//     {
-//      printf("The file2 cannot accept write operations.\n" );
-//      printf("file2 revents = %i\n", struct_fds[1].revents );
-//     }
-//     //Step 6
-//     sleep (3);
-//     close (struct_fds[0].fd);
-//     close (struct_fds[1].fd);
 }
