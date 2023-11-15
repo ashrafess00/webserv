@@ -29,6 +29,7 @@
 #include "../src/Logger/Logger.hpp"
 #include "../src/Server/Server.hpp"
 #include "../src/ReturnStatus/ReturnStatus.hpp"
+#include "../src/Server/HttpMessage.hpp"
  
 // Consts
 #define BUFFER_SIZE (1024 * 1024) // 1MB

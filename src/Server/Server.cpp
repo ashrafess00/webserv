@@ -161,6 +161,8 @@ void Server::waitClients()
 					else
 					{
 						std::string str_buffer(buffer), target, method;
+    					std::cout << "\n[[" << buffer << "]]\n";
+
 						int pos = str_buffer.find(" ");
 						// -----------------------------------------------------
 						parse_request(str_buffer, method, target);
@@ -169,6 +171,7 @@ void Server::waitClients()
 						send(fds[i].fd, http_resp.c_str(), http_resp.length(), 0);
 						close(fds[i].fd);
 					}
+					// buffer.str("");
 					delete[] buffer;
 				}
 				
